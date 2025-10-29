@@ -110,11 +110,11 @@ public:
 			bulletShape[i] = { 2.0f * cosf(3.141592f / ((float)i + 1.0f)), 2.0f * sinf(3.141592f / ((float)i + 1.0f))};
 		}
 
-		sprCanon = new olc::Sprite("./canon.png");
-		sprBase = new olc::Sprite("./base.png");
-		sprBullet = new olc::Sprite("./bullet.png");
-		sprHelicopter1 = new olc::Sprite("./helicopter.png");
-		sprHelicopter2 = new olc::Sprite("./helicoptermirror.png");
+		sprCanon = new olc::Sprite("./res/canon.png");
+		sprBase = new olc::Sprite("./res/base.png");
+		sprBullet = new olc::Sprite("./res/bullet.png");
+		sprHelicopter1 = new olc::Sprite("./res/helicopter.png");
+		sprHelicopter2 = new olc::Sprite("./res/helicoptermirror.png");
 		decCanon = new olc::Decal(sprCanon);
 		decBase = new olc::Decal(sprBase);
 
