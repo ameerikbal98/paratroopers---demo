@@ -16,6 +16,7 @@ struct cPhysics
 	float fDeploy = 0.0f;
 	bool bIsDeploy = false;
 	float fTotalDistanceTravelledX = 0.0f;
+	bool bStable = false;
 	cPhysics(float x,float y, float angle, float velMag, char c)
 	{
 		fpx = x;
@@ -60,6 +61,7 @@ private:
 
 	std::list<std::unique_ptr<cPhysics>> vecAerialBullets;
 	std::list<std::unique_ptr<cPhysics>> vecAerialHelicopter;
+	std::list<std::unique_ptr<cPhysics>> vecAerialTroopers;
 	olc::vf2d bulletShape[10];
 
 	//Sprites
@@ -68,6 +70,8 @@ private:
 	olc::Sprite *sprBullet;
 	olc::Sprite *sprHelicopter1;
 	olc::Sprite *sprHelicopter2;
+	olc::Sprite *sprTroopers;
+	olc::Sprite *sprParachute;
 	olc::Decal *decCanon;
 	olc::Decal *decBase;
 
@@ -115,6 +119,8 @@ public:
 		sprBullet = new olc::Sprite("./res/bullet.png");
 		sprHelicopter1 = new olc::Sprite("./res/helicopter.png");
 		sprHelicopter2 = new olc::Sprite("./res/helicoptermirror.png");
+		sprTroopers = new olc::Sprite("./res/trooper.png");
+		sprParachute = new olc::Sprite("./res/parachute.png");
 		decCanon = new olc::Decal(sprCanon);
 		decBase = new olc::Decal(sprBase);
 
@@ -165,7 +171,7 @@ public:
 					phy->fDeploy = rand() % ScreenWidth();
 					if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
 					{
-						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy + 15.0f : phy->fDeploy - 15.0f;
+						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
 					}
 					vecAerialHelicopter.push_back(std::unique_ptr<cPhysics>(phy));
 					nCurrentEnemy ++;
@@ -178,7 +184,7 @@ public:
 					phy->fDeploy = rand() % ScreenWidth();
 					if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
 					{
-						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy + 15.0f : phy->fDeploy - 15.0f;
+						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
 					}
 					vecAerialHelicopter.push_back(std::unique_ptr<cPhysics>(phy));
 					nCurrentEnemy ++;
@@ -224,12 +230,36 @@ public:
 			f->UpdateCoordinates(fElapsedTime);
 			// if(f->fpy < 0 || f->fpx >= ScreenWidth() || f->fpy >= ScreenHeight())
 			// 	f->bDead = true; 
+			if((int)f->fpx == (int)f->fDeploy)
+			{
+				cPhysics *troop = new cPhysics(f->fpx,f->fpy, 3.141592f / 2.0f,50.0f,'t');
+				vecAerialTroopers.push_back(std::unique_ptr<cPhysics>(troop));
+			}
 			if(f->fTotalDistanceTravelledX > ScreenWidth() + 40)
 				f->bDead = true;
 			if(f->fAngle == 0)
 				DrawSprite(f->fpx,f->fpy,sprHelicopter1);
 			if(f->fAngle == 3.141592f)
 				DrawSprite(f->fpx,f->fpy,sprHelicopter2);
+		}
+
+
+		for(auto &f : vecAerialTroopers)
+		{
+			if(f->fpy >= (float)nSHeight - 8.0f ) //if the troopers hit the border chages the coordinates and velocity to stationary.
+			{
+				f->fpy = (float)nSHeight - 8.0f;
+				f->fvy = 0.0f;
+				f->bStable = true;
+			}
+
+			f->UpdateCoordinates(fElapsedTime);
+			if(f->fpy > nSHeight - 130.0f && !f->bStable)
+			{
+				f->fvy = 30.0f;
+				DrawSprite(f->fpx,f->fpy - 8.0f,sprParachute);
+			}
+			DrawSprite(f->fpx,f->fpy,sprTroopers);
 		}
 		SetPixelMode(olc::Pixel::NORMAL);
 
