@@ -17,6 +17,8 @@ struct cPhysics
 	bool bIsDeploy = false;
 	float fTotalDistanceTravelledX = 0.0f;
 	bool bStable = false;
+	bool bParachute = false;
+	bool bPrachuteDestroyed = false;
 	cPhysics(float x,float y, float angle, float velMag, char c)
 	{
 		fpx = x;
@@ -144,6 +146,7 @@ public:
 		}
 		if(GetKey(olc::Key::SPACE).bReleased)
 		{
+			nScore-=1;
 			vecAerialBullets.push_back(std::make_unique<cPhysics>(vfCanonPos.x + 16 * cosf(fCanonAngle - 3.14592 / 2.0f), vfCanonPos.y + 16 * sinf(fCanonAngle - 3.141592 / 2.0f),fCanonAngle - 3.141592 / 2.0f,100.0f,'b'));
 		}
 
@@ -163,15 +166,20 @@ public:
 				int dir = rand() % 2;
 				float offsetx = 16;
 				float offsety = 10;
+				int Trooper = rand() % 3; // 1 in 3 helicopter will have troopers
 				if(dir == 0)
 				{
 					float posx = 0 - i * offsetx;
 					float posy = 3 + rand() % 5 + offsety * i;
 					cPhysics *phy = new cPhysics(posx, posy, 0.0f, 40,'h');
-					phy->fDeploy = rand() % ScreenWidth();
-					if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
+					if(Trooper == 0)
 					{
-						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
+						phy->bIsDeploy = true;
+						phy->fDeploy = rand() % ScreenWidth();
+						if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
+						{
+							phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
+						}
 					}
 					vecAerialHelicopter.push_back(std::unique_ptr<cPhysics>(phy));
 					nCurrentEnemy ++;
@@ -181,10 +189,14 @@ public:
 					float posx = ScreenWidth() + offsetx;
 					float posy = 3 + rand() % 5 + offsety * i;
 					cPhysics *phy = new cPhysics(posx, posy, 3.141592f, 40,'h');
-					phy->fDeploy = rand() % ScreenWidth();
-					if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
+					if(Trooper == 0)
 					{
-						phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
+						phy->bIsDeploy = true;
+						phy->fDeploy = rand() % ScreenWidth();
+						if(phy->fDeploy > (ScreenWidth() / 2 - 15.0f) && phy->fDeploy < (ScreenWidth() / 2 + 15.0f))
+						{
+							phy->fDeploy > (ScreenWidth() / 2) ? phy->fDeploy += 25.0f : phy->fDeploy -= 25.0f;
+						}
 					}
 					vecAerialHelicopter.push_back(std::unique_ptr<cPhysics>(phy));
 					nCurrentEnemy ++;
@@ -211,17 +223,79 @@ public:
 
 			for( auto &h : vecAerialHelicopter) //collision detection
 			{
-				if(f->fpx > h->fpx && f->fpx < (h->fpx + 16) && f->fpy < (h->fpy + 8)) //checs the top left position of bullet with the helicopter
+				if(f->fpx > h->fpx && f->fpx < (h->fpx + 16) && f->fpy < (h->fpy + 8) && f->fpy > h->fpy) //checs the top left position of bullet with the helicopter
 				{
 					f->bDead = true;
 					h->bDead = true;
 				}
-				if((f->fpx + 2) > h->fpx && (f->fpx + 2) < (h->fpx + 16) && f->fpy < (h->fpy + 8)) // checks the top right postion with the helicopter
+				else if((f->fpx + 2) > h->fpx && (f->fpx + 2) < (h->fpx + 16) && f->fpy < (h->fpy + 8) && f->fpy > h->fpy) // checks the top right postion with the helicopter
 				{
 					f->bDead = true;
 					h->bDead = true;
+				}
+				if(h->bDead)
+				{
+					nScore+=10;
 				}
 			}
+			for( auto &h : vecAerialTroopers) //collision detection
+			{
+				if(f->fpx >= h->fpx && f->fpx <= (h->fpx + 8) && f->fpy <= (h->fpy + 8) && f->fpy >= h->fpy) //checs the top left position of bullet with the Trooper
+				{
+					f->bDead = true;
+					h->bDead = true;
+				}
+				else if((f->fpx + 2) >= h->fpx && (f->fpx + 2) <= (h->fpx + 8) && f->fpy <= (h->fpy + 8) && f->fpy >= h->fpy) // checks the top right postion with the Troope
+				{
+					f->bDead = true;
+					h->bDead = true;
+				}
+				else if((f->fpx + 2) >= h->fpx && (f->fpx + 2) <= (h->fpx + 8) && (f->fpy + 2) <= (h->fpy + 8) && (f->fpy + 2) >= h->fpy) // checks the bottom right postion with the Trooper
+				{
+					f->bDead = true;
+					h->bDead = true;
+				}
+				else if(f->fpx >= h->fpx && f->fpx <= (h->fpx + 8) && (f->fpy + 2) <= (h->fpy + 8) && (f->fpy + 2) >= h->fpy) // checks the bottom right postion with the trooper
+				{
+					f->bDead = true;
+					h->bDead = true;
+				}
+
+				//collision detection fo the parachute
+				if(h->bParachute && !h->bPrachuteDestroyed)
+				{
+					if(f->fpx >= h->fpx && f->fpx <= (h->fpx + 8) && f->fpy <= (h->fpy) && f->fpy >= h->fpy - 8) //checs the top left position of bullet with the Trooper
+					{
+						f->bDead = true;
+						h->bParachute = false;
+						h->bPrachuteDestroyed = true;
+					}
+					else if((f->fpx + 2) >= h->fpx && (f->fpx + 2) <= (h->fpx + 8) && f->fpy <= (h->fpy) && f->fpy >= h->fpy - 8) // checks the top right postion with the Troope
+					{
+						f->bDead = true;
+						h->bParachute = false;
+						h->bPrachuteDestroyed = true;
+					}
+					else if((f->fpx + 2) >= h->fpx && (f->fpx + 2) <= (h->fpx + 8) && (f->fpy + 2) <= (h->fpy) && (f->fpy + 2) >= h->fpy - 8) // checks the bottom right postion with the Trooper
+					{
+						f->bDead = true;
+						h->bParachute = false;
+						h->bPrachuteDestroyed = true;
+					}
+					else if(f->fpx >= h->fpx && f->fpx <= (h->fpx + 8) && (f->fpy + 2) <= (h->fpy) && (f->fpy + 2) >= h->fpy - 8) // checks the bottom right postion with the trooper
+					{
+						f->bDead = true;
+						h->bParachute = false;
+						h->bPrachuteDestroyed = true;
+					}
+				}
+				if(f->bDead)
+				{
+					nScore+=10;
+				}
+			}
+
+
 			DrawSprite(f->fpx,f->fpy,sprBullet);
 		}
 		SetPixelMode(olc::Pixel::MASK);
@@ -230,10 +304,11 @@ public:
 			f->UpdateCoordinates(fElapsedTime);
 			// if(f->fpy < 0 || f->fpx >= ScreenWidth() || f->fpy >= ScreenHeight())
 			// 	f->bDead = true; 
-			if((int)f->fpx == (int)f->fDeploy)
+			if(f->fpx >= f->fDeploy && f->bIsDeploy)
 			{
 				cPhysics *troop = new cPhysics(f->fpx,f->fpy, 3.141592f / 2.0f,50.0f,'t');
 				vecAerialTroopers.push_back(std::unique_ptr<cPhysics>(troop));
+				f->bIsDeploy = false; 
 			}
 			if(f->fTotalDistanceTravelledX > ScreenWidth() + 40)
 				f->bDead = true;
@@ -248,26 +323,37 @@ public:
 		{
 			if(f->fpy >= (float)nSHeight - 8.0f ) //if the troopers hit the border chages the coordinates and velocity to stationary.
 			{
+				if(f->bPrachuteDestroyed)
+					f->bDead = true;
 				f->fpy = (float)nSHeight - 8.0f;
 				f->fvy = 0.0f;
 				f->bStable = true;
 			}
 
 			f->UpdateCoordinates(fElapsedTime);
-			if(f->fpy > nSHeight - 130.0f && !f->bStable)
+			if(f->fpy > nSHeight - 130.0f && !f->bStable && !f->bPrachuteDestroyed && !f->bParachute) //draw parachute if the trooper has travelled below a particulay y value and if the trooper is not stable
 			{
-				f->fvy = 30.0f;
-				DrawSprite(f->fpx,f->fpy - 8.0f,sprParachute);
+				f->fvy = 25.0f;
+				f->bParachute = true;
+			}
+			if(!f->bStable)
+			{
+				if(!f->bPrachuteDestroyed && f->bParachute)
+					DrawSprite(f->fpx,f->fpy - 8.0f,sprParachute);
+				else
+					f->fvy = 50.0f;
 			}
 			DrawSprite(f->fpx,f->fpy,sprTroopers);
 		}
 		SetPixelMode(olc::Pixel::NORMAL);
-
-		//collision detection
 		
-
+		//remove dead objects from vectors
 		vecAerialBullets.remove_if([](std::unique_ptr<cPhysics> &o) {return o->bDead;});
 		vecAerialHelicopter.remove_if([](std::unique_ptr<cPhysics> &o) {return o->bDead;});
+		vecAerialTroopers.remove_if([](std::unique_ptr<cPhysics> &o) {return o->bDead;});
+
+
+
 		nCurrentEnemy = vecAerialHelicopter.size();
 		if(nCurrentEnemy == 0 && fTimePassed > 3.0f)
 		{
